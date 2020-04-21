@@ -6,15 +6,18 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NETCore.MailKit.Extensions;
 using NETCore.MailKit.Infrastructure.Internal;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Logging.Debug;
 
 namespace NETCore.MailKit.Web
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IHostEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
@@ -36,10 +39,17 @@ namespace NETCore.MailKit.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
-            services.AddMvc();
+            services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddConsole();
+                loggingBuilder.AddDebug();
+            });
 
-            //Add MailKit
+            services.AddApplicationInsightsTelemetry();
+            // Add framework services.
+            services.AddMvc(x => x.EnableEndpointRouting = false);
+
+            // Add MailKit
             services.AddMailKit(optionBuilder =>
             {
                 optionBuilder.UseMailKit(new MailKitOptions()
@@ -50,7 +60,7 @@ namespace NETCore.MailKit.Web
                     SenderName = Configuration["SenderName"],
                     SenderEmail = Configuration["SenderEmail"],
 
-                    //can be optional with no authentication 
+                    //can be optional with no authentication
                     Account = Configuration["Account"],
                     Password = Configuration["Password"]
                 });
@@ -58,15 +68,11 @@ namespace NETCore.MailKit.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseBrowserLink();
             }
             else
             {
@@ -75,12 +81,9 @@ namespace NETCore.MailKit.Web
 
             app.UseStaticFiles();
 
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
-            });
+            app.UseMvc();
+            app.UseRouting();
+            app.UseMvcWithDefaultRoute();
         }
     }
 }

@@ -16,18 +16,18 @@ namespace NETCore.MailKit.Tests
         {
             var provider = new MailKitProvider(new MailKitOptions()
             {
-                Server = "smtp server address",
+                Server = "localhost",
                 Port = 25,
                 SenderName = "mail from user name",
-                SenderEmail = "mail from ",
+                SenderEmail = "from@email.com",
                 Account = "your email",
                 Password = "your password"
             });
 
             _EmailService = new EmailService(provider);
 
-            _MailToOne = "email address";
-            _MailToMulti = "address1,address2";
+            _MailToOne = "email@email.com";
+            _MailToMulti = "email1@email.com,email2@email.com";
         }
 
         [Fact(DisplayName = "MailToisNullTest")]
@@ -38,7 +38,7 @@ namespace NETCore.MailKit.Tests
 
             //Assert
             Assert.IsType<ArgumentException>(excetpion);
-            Assert.Equal("collection not be empty.\r\nParameter name: mailTo", excetpion.Message);
+            Assert.Equal("collection not be empty. (Parameter 'mailTo')", excetpion.Message);
         }
 
         [Fact(DisplayName = "MailToOneTest")]
